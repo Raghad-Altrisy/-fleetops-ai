@@ -7,15 +7,15 @@
 في الدورة الـ15 من المسابقة الصينية الدولية للابتكار وريادة الأعمال.
 
 ## الحالة الحالية
-- [x] Day 1-2: هيكل المشروع + بيانات أسطول واقعية (Synthetic Dataset)
-- [x] Day 3: حساب مؤشرات الأداء (KPIs)
-- [x] Day 4: بناء أدوات التحليل (Tool Functions) للـ AI Agent
-- [x] Day 5: ربط LLM API + Agent Logic (Real Mode + Test Mode)
-- [x] Day 6: واجهة Streamlit (Dashboard + Chat) — تم اختبارها محليًا وتعمل بنجاح
-- [x] Day 7: كشف شذوذ بالـ Machine Learning (Isolation Forest) + Attention Score موحّد
-- [x] Day 8: اختبار شامل (Edge Cases) — لا يوجد أي تعطل حتى مع أسئلة غامضة/فارغة
-- [x] Day 9: تقرير المشروع (PDF) + العرض التقديمي (PPTX) + نوت بوك Colab
-- [x] Day 10: المراجعة النهائية — كل الملفات جاهزة للتسليم
+- [x]  1-2: هيكل المشروع + بيانات أسطول واقعية (Synthetic Dataset)
+- [x]  3: حساب مؤشرات الأداء (KPIs)
+- [x]  4: بناء أدوات التحليل (Tool Functions) للـ AI Agent
+- [x]  5: ربط LLM API + Agent Logic (Real Mode + Test Mode)
+- [x]  6: واجهة Streamlit (Dashboard + Chat) — تم اختبارها محليًا وتعمل بنجاح
+- [x]  7: كشف شذوذ بالـ Machine Learning (Isolation Forest) + Attention Score موحّد
+- [x]  8: اختبار شامل (Edge Cases) — لا يوجد أي تعطل حتى مع أسئلة غامضة/فارغة
+- [x]  9: تقرير المشروع (PDF) + العرض التقديمي (PPTX) + نوت بوك Colab
+- [x]  10: المراجعة النهائية — كل الملفات جاهزة للتسليم
 
 ## هيكل المشروع
 ```
@@ -53,7 +53,7 @@ python src/generate_data.py   # توليد البيانات
 python src/kpis.py            # حساب المؤشرات
 ```
 
-## ملخص الأدوات (Tool Functions) — Day 4
+## ملخص الأدوات (Tool Functions) —
 | الأداة | الوظيفة |
 |---|---|
 | `get_top_downtime_equipment(top_n)` | أعلى المعدات توقفًا |
@@ -62,7 +62,7 @@ python src/kpis.py            # حساب المؤشرات
 | `analyze_fuel_consumption(equipment_id)` | اكتشاف قفزات استهلاك الوقود الحديثة (Anomaly Detection بسيط) |
 | `generate_fleet_report()` | تقرير أداء شامل |
 
-## الـ Agent — Day 5
+## الـ Agent —
 - `ask_agent(question)` في `src/agent.py`: نقطة دخول واحدة.
   - لو `OPENAI_API_KEY` موجود بالـ environment → **Real Mode**: OpenAI Chat Completions + Function Calling الحقيقي.
   - لو مش موجود → **Test Mode**: Router بسيط (keyword matching) لنفس الأدوات، لاختبار الـ pipeline بدون تكلفة API.
