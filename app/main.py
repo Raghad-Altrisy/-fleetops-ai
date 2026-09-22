@@ -308,7 +308,10 @@ with tab_chat:
 
         with st.chat_message("assistant"):
             with st.spinner("Analyzing..."):
-                answer = agent.ask_agent(user_q, api_key=api_key or os.getenv("OPENAI_API_KEY"))
+               if api_key:
+    answer = agent.ask_agent(user_q, api_key=api_key)
+else:
+    answer = agent.ask_agent(user_q)
                 st.markdown(answer)
         st.session_state.chat_history.append(("assistant", answer))
 
