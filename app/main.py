@@ -289,8 +289,8 @@ with tab_overview:
 # ============================== TAB 2: CHAT ==============================
 with tab_chat:
     section("Ask the AI agent about your fleet")
-    st.caption("Try: "Which equipment has the highest downtime?" / "Which equipment needs urgent attention?" "
-               "/ "What's causing the fuel increase?" / "Give me a unified priority ranking"")
+    st.caption("Try: 'Which equipment has the highest downtime?' / 'Which equipment needs urgent attention?' "
+               "/ 'What\'s causing the fuel increase?' / 'Give me a unified priority ranking'")
 
     if "chat_history" not in st.session_state:
         st.session_state.chat_history = []
