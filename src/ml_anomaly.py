@@ -54,8 +54,8 @@ def detect_ml_anomalies(contamination: float = 0.15) -> dict:
         "data": anomalies[["equipment_id", "equipment_type", "project", "downtime_rate_%",
                             "fuel_vs_type_%", "maintenance_events", "anomaly_score"]].round(2).to_dict(orient="records"),
         "narrative_hint": (
-            "هذه المعدات شاذة إحصائيًا بناءً على مجموعة الخصائص معًا (مش خاصية واحدة بس)، "
-            "يعني ممكن تكون شاذة حتى لو كل قيمة لوحدها تبدو طبيعية."
+            "These units are statistical outliers based on the combination of features together (not just one metric), "
+            "meaning a unit can be flagged as anomalous even if each individual value looks normal on its own."
         ),
     }
 
@@ -99,7 +99,7 @@ def compute_attention_scores() -> dict:
         "tool": "compute_attention_scores",
         "data": result[["equipment_id", "equipment_type", "project", "attention_score",
                          "downtime_rate_%", "fuel_dev_%", "maintenance_events"]].round(1).to_dict(orient="records"),
-        "narrative_hint": "ترتيب موحّد للمعدات حسب الأولوية (0-100)، أعلى رقم = أولوية تدخل أعلى.",
+        "narrative_hint": "Unified priority ranking of equipment (0-100); higher = higher intervention priority.",
     }
 
 

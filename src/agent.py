@@ -105,10 +105,10 @@ TOOL_FUNCTIONS = {
     "compute_attention_scores": ml_anomaly.compute_attention_scores,
 }
 
-SYSTEM_PROMPT = """أنت FleetOps AI، مساعد ذكي لعمليات أسطول معدات الإنشاء.
-مهمتك: فهم سؤال المستخدم، اختيار الأداة (tool) المناسبة، تنفيذها، ثم تلخيص النتيجة
-في إجابة واضحة وقابلة للتنفيذ (Insight + توصية عملية) بنفس لغة سؤال المستخدم.
-لا تخترع أرقامًا؛ استخدم فقط البيانات التي ترجعها الأدوات."""
+SYSTEM_PROMPT = """You are FleetOps AI, an intelligent assistant for construction fleet operations.
+Your job: understand the user's question, select the right tool, run it, then summarize the result
+into a clear, actionable answer (insight + practical recommendation) in the same language as the
+user's question. Never invent numbers; use only the data returned by the tools."""
 
 
 # ---------------------------------------------------------------------------
@@ -153,7 +153,8 @@ def ask_agent_real(user_question: str) -> str:
 # ---------------------------------------------------------------------------
 def _route_question(question: str) -> tuple[str, dict]:
     q = question.lower()
-    if any(k in q for k in ["أولوية موحد", "attention score", "ترتيب شامل", "priority score", "درجة الأولوية"]):
+    if any(k in q for k in ["أولوية موحد", "attention score", "ترتيب شامل", "priority score",
+                             "درجة الأولوية", "priority ranking", "unified priority", "attention rank"]):
         return "compute_attention_scores", {}
     if any(k in q for k in ["تدخل فوري", "أولوية", "attention", "urgent", "priority"]):
         return "get_equipment_needing_attention", {}
@@ -169,58 +170,58 @@ def _route_question(question: str) -> tuple[str, dict]:
 
 
 def _summarize(tool_name: str, result: dict) -> str:
-    """توليد إجابة نصية مبسّطة من نتيجة الأداة (محاكاة تلخيص الـ LLM في وضع الاختبار)."""
+    """Generate a simplified text answer from a tool's result (simulates LLM summarization in Test Mode)."""
     if "error" in result:
         return f"⚠️ {result['error']}"
 
     if tool_name == "get_top_downtime_equipment":
-        lines = [f"🔧 أعلى المعدات من حيث التوقف:"]
+        lines = ["🔧 Equipment ranked by downtime:"]
         for r in result["data"]:
             lines.append(f"  • {r['equipment_id']} ({r['equipment_type']}, {r['project']}) — "
-                         f"توقف {r['downtime_rate_%']}% | صيانة {r['maintenance_events']} مرة")
+                         f"downtime {r['downtime_rate_%']}% | maintenance {r['maintenance_events']}x")
         return "\n".join(lines)
 
     if tool_name == "get_equipment_needing_attention":
         if not result["data"]:
-            return "✅ لا توجد معدات تحتاج تدخل فوري حاليًا."
-        lines = ["🚨 معدات تحتاج تدخل فوري:"]
+            return "✅ No equipment currently needs immediate attention."
+        lines = ["🚨 Equipment needing immediate attention:"]
         for r in result["data"]:
-            lines.append(f"  • {r['equipment_id']} ({r['equipment_type']}, {r['project']}) — السبب: {r['reason']}")
+            lines.append(f"  • {r['equipment_id']} ({r['equipment_type']}, {r['project']}) — Reason: {r['reason']}")
         return "\n".join(lines)
 
     if tool_name == "explain_utilization_trend":
-        direction = "انخفاض 📉" if result["change_%"] < 0 else "ارتفاع/استقرار 📈"
+        direction = "declining 📉" if result["change_%"] < 0 else "rising/stable 📈"
         return (
-            f"📊 معدل الاستخدام في ({result['scope']}): من {result['first_3_weeks_avg_%']}% "
-            f"إلى {result['last_3_weeks_avg_%']}% ({direction}, تغيّر {result['change_%']}%).\n"
-            f"السبب الأرجح: توقف مرتفع في معدات نوع '{result['likely_driver_equipment_type']}' مؤخرًا."
+            f"📊 Utilization rate in ({result['scope']}): from {result['first_3_weeks_avg_%']}% "
+            f"to {result['last_3_weeks_avg_%']}% ({direction}, change {result['change_%']}%).\n"
+            f"Likely driver: elevated downtime recently in '{result['likely_driver_equipment_type']}' units."
         )
 
     if tool_name == "analyze_fuel_consumption":
         if result["anomalies_found"] == 0:
-            return "✅ لا توجد قفزات غير طبيعية في استهلاك الوقود حاليًا."
-        lines = [f"⛽ تم اكتشاف {result['anomalies_found']} حالة شذوذ في استهلاك الوقود:"]
+            return "✅ No abnormal fuel-consumption spikes detected currently."
+        lines = [f"⛽ {result['anomalies_found']} fuel-consumption anomaly(ies) detected:"]
         for r in result["data"]:
-            lines.append(f"  • {r['equipment_id']} ({r['equipment_type']}) — {r['flag']} بنسبة {r['change_%']}% "
-                         f"({r['baseline_l_per_hr']} → {r['recent_l_per_hr']} لتر/ساعة)")
-        lines.append("💡 التوصية: فحص ميكانيكي فوري (تسريب/فلتر/محرك) للمعدات المذكورة.")
+            lines.append(f"  • {r['equipment_id']} ({r['equipment_type']}) — {r['flag']} of {r['change_%']}% "
+                         f"({r['baseline_l_per_hr']} → {r['recent_l_per_hr']} L/hr)")
+        lines.append("💡 Recommendation: schedule an immediate mechanical inspection (leak/filter/engine) for the units above.")
         return "\n".join(lines)
 
     if tool_name == "generate_fleet_report":
         lines = [
-            f"📋 تقرير أداء الأسطول ({result['period']})",
-            f"  • عدد المعدات: {result['fleet_size']}",
-            f"  • معدل الاستخدام العام: {result['overall_utilization_%']}%",
-            f"  • إجمالي ساعات التشغيل: {result['total_operating_hours']} | التوقف: {result['total_downtime_hours']}",
-            f"  • إجمالي استهلاك الوقود: {result['total_fuel_l']} لتر",
-            "  • أهم 3 مشاكل توقف: " + ", ".join(d["equipment_id"] for d in result["top_downtime_equipment"]),
+            f"📋 Fleet Performance Report ({result['period']})",
+            f"  • Fleet size: {result['fleet_size']}",
+            f"  • Overall utilization rate: {result['overall_utilization_%']}%",
+            f"  • Total operating hours: {result['total_operating_hours']} | Downtime: {result['total_downtime_hours']}",
+            f"  • Total fuel consumption: {result['total_fuel_l']} L",
+            "  • Top 3 downtime issues: " + ", ".join(d["equipment_id"] for d in result["top_downtime_equipment"]),
         ]
         if result["fuel_anomalies"]:
-            lines.append("  • تنبيه وقود: " + ", ".join(a["equipment_id"] for a in result["fuel_anomalies"]))
+            lines.append("  • Fuel alert: " + ", ".join(a["equipment_id"] for a in result["fuel_anomalies"]))
         return "\n".join(lines)
 
     if tool_name == "compute_attention_scores":
-        lines = ["🎯 ترتيب المعدات حسب درجة الأولوية الموحدة (0-100):"]
+        lines = ["🎯 Equipment ranked by unified Attention Score (0-100):"]
         for r in result["data"][:10]:
             lines.append(f"  • {r['equipment_id']} ({r['equipment_type']}, {r['project']}) — "
                          f"Attention Score: {r['attention_score']}/100")

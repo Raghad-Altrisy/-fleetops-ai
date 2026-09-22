@@ -16,10 +16,36 @@ import numpy as np
 DAILY_PATH = "data/fleet_daily_logs.csv"
 EQUIP_PATH = "data/equipment_master.csv"
 
+# Optional in-memory override, set via set_data_source() — lets the dashboard
+# test the same analysis pipeline against a user-uploaded dataset without
+# touching the bundled sample files on disk.
+_OVERRIDE = {"daily": None, "equip": None}
+
+
+def set_data_source(equipment_df: pd.DataFrame, daily_df: pd.DataFrame):
+    """Point every tool function at a user-supplied dataset instead of the bundled sample data."""
+    _OVERRIDE["equip"] = equipment_df
+    _OVERRIDE["daily"] = daily_df
+
+
+def reset_data_source():
+    """Revert to the bundled sample dataset."""
+    _OVERRIDE["equip"] = None
+    _OVERRIDE["daily"] = None
+
+
+def using_custom_data() -> bool:
+    return _OVERRIDE["daily"] is not None
+
 
 def _load_data():
-    daily = pd.read_csv(DAILY_PATH, parse_dates=["date"])
-    equip = pd.read_csv(EQUIP_PATH)
+    if _OVERRIDE["daily"] is not None:
+        daily = _OVERRIDE["daily"].copy()
+        equip = _OVERRIDE["equip"].copy()
+    else:
+        daily = pd.read_csv(DAILY_PATH, parse_dates=["date"])
+        equip = pd.read_csv(EQUIP_PATH)
+    daily["date"] = pd.to_datetime(daily["date"])
     df = daily.merge(equip, on=["equipment_id", "equipment_type", "project"])
     return df
 
@@ -44,8 +70,8 @@ def get_top_downtime_equipment(top_n: int = 5) -> dict:
         "tool": "get_top_downtime_equipment",
         "data": top.to_dict(orient="records"),
         "narrative_hint": (
-            f"أعلى {top_n} معدات من حيث معدل التوقف، مرتبة تنازليًا. "
-            "قارن بين downtime_rate_% لكل معدة والمتوسط العام لتحديد الشذوذ."
+            f"Top {top_n} equipment by downtime rate, sorted descending. "
+            "Compare each unit's downtime_rate_% against the fleet average to identify outliers."
         ),
     }
 
@@ -85,11 +111,11 @@ def get_equipment_needing_attention(downtime_threshold_pct: float = 15.0) -> dic
     for _, row in flagged.iterrows():
         r = []
         if row["downtime_rate_%"] >= downtime_threshold_pct:
-            r.append(f"downtime مرتفع ({row['downtime_rate_%']}%)")
+            r.append(f"High downtime ({row['downtime_rate_%']}%)")
         if row["fuel_vs_type_avg_%"] >= 20:
-            r.append(f"استهلاك وقود أعلى من متوسط نوعه ({row['equipment_type']}) بـ {row['fuel_vs_type_avg_%']}%")
+            r.append(f"Fuel use {row['fuel_vs_type_avg_%']}% above its own type average ({row['equipment_type']})")
         if row["maintenance_events"] >= maint_threshold:
-            r.append(f"صيانة متكررة بشكل غير طبيعي ({int(row['maintenance_events'])} مرة مقابل متوسط {maint_mean:.1f})")
+            r.append(f"Abnormally frequent maintenance ({int(row['maintenance_events'])} events vs fleet avg {maint_mean:.1f})")
         reasons.append(" + ".join(r))
     flagged["reason"] = reasons
     flagged = flagged.sort_values("downtime_rate_%", ascending=False)
@@ -98,7 +124,7 @@ def get_equipment_needing_attention(downtime_threshold_pct: float = 15.0) -> dic
         "tool": "get_equipment_needing_attention",
         "data": flagged[["equipment_id", "equipment_type", "project", "downtime_rate_%",
                           "fuel_eff_l_per_hr", "fuel_vs_type_avg_%", "maintenance_events", "reason"]].to_dict(orient="records"),
-        "narrative_hint": "قائمة المعدات المطلوب التدخل عندها فورًا مع السبب الرئيسي لكل واحدة.",
+        "narrative_hint": "Equipment requiring immediate intervention, with the main reason for each.",
     }
 
 
@@ -111,7 +137,7 @@ def explain_utilization_trend(project: str | None = None) -> dict:
     if project:
         df = df[df["project"] == project]
         if df.empty:
-            return {"tool": "explain_utilization_trend", "error": f"لا يوجد مشروع باسم {project}"}
+            return {"tool": "explain_utilization_trend", "error": f"No project found named {project}"}
 
     df["week"] = df["date"].dt.isocalendar().week
     weekly = df.groupby("week").apply(
@@ -130,15 +156,15 @@ def explain_utilization_trend(project: str | None = None) -> dict:
 
     return {
         "tool": "explain_utilization_trend",
-        "scope": project or "كل الأسطول",
+        "scope": project or "Entire fleet",
         "weekly_trend": weekly.to_dict(orient="records"),
         "first_3_weeks_avg_%": round(first3, 1),
         "last_3_weeks_avg_%": round(last3, 1),
         "change_%": delta,
         "likely_driver_equipment_type": likely_driver,
         "narrative_hint": (
-            "قارن first_3_weeks_avg مع last_3_weeks_avg. لو change_% سالب وكبير، "
-            "فسّر السبب باستخدام likely_driver_equipment_type (نوع المعدة اللي ساهم أكتر في التوقف بآخر 3 أسابيع)."
+            "Compare first_3_weeks_avg with last_3_weeks_avg. If change_% is negative and large, "
+            "explain it using likely_driver_equipment_type (the equipment type contributing most to downtime in the last 3 weeks)."
         ),
     }
 
@@ -169,7 +195,7 @@ def analyze_fuel_consumption(equipment_id: str | None = None) -> dict:
                 "baseline_l_per_hr": round(baseline, 2),
                 "recent_l_per_hr": round(recent, 2),
                 "change_%": pct_change,
-                "flag": "ارتفاع مشبوه" if pct_change > 0 else "انخفاض ملحوظ",
+                "flag": "Suspicious increase" if pct_change > 0 else "Notable decrease",
             })
 
     results = sorted(results, key=lambda x: abs(x["change_%"]), reverse=True)
@@ -178,8 +204,8 @@ def analyze_fuel_consumption(equipment_id: str | None = None) -> dict:
         "anomalies_found": len(results),
         "data": results,
         "narrative_hint": (
-            "المعدات دي عندها تغيّر غير طبيعي في استهلاك الوقود مقارنة بأدائها المعتاد. "
-            "الارتفاع المفاجئ غالبًا مؤشر على مشكلة ميكانيكية (تسريب، فلتر مسدود، مشكلة محرك) وليس مجرد زيادة استخدام."
+            "These units show an abnormal change in fuel consumption compared to their own typical performance. "
+            "A sudden increase is usually a sign of a mechanical issue (leak, clogged filter, engine problem) rather than just increased usage."
         ),
     }
 
@@ -217,7 +243,7 @@ def generate_fleet_report() -> dict:
         "by_project": by_project.to_dict(orient="records"),
         "top_downtime_equipment": top_issues,
         "fuel_anomalies": fuel_anomalies,
-        "narrative_hint": "استخدم هذا كأساس لتقرير أداء شهري: نظرة عامة + أهم 3 مشاكل + توصيات.",
+        "narrative_hint": "Use this as the basis for a monthly performance report: overview + top 3 issues + recommendations.",
     }
 
 

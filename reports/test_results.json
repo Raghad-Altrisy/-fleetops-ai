@@ -35,7 +35,7 @@
     "id": "TC-05",
     "name": "ML anomaly detection cross-validates manual downtime ranking",
     "expected": "At least 2 of top-3 manual downtime units also flagged by Isolation Forest",
-    "actual": "Overlap: {'EQ-024', 'EQ-026', 'EQ-013'} (3/3)",
+    "actual": "Overlap: {'EQ-013', 'EQ-026', 'EQ-024'} (3/3)",
     "passed": true,
     "notes": ""
   },
