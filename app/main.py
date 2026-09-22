@@ -6,12 +6,6 @@ Professional visual identity inspired by XCMG's industrial branding
 China International College Students' Innovation & Entrepreneurship
 Competition — Track: AI + Construction Machinery -> AI + Operations.
 
-One app with:
-  1) Overview: fleet KPIs, charts, and the unified Attention Score
-  2) Chat: natural-language Q&A with the AI agent (agent.ask_agent)
-  3) Reports: a shareable performance summary
-  4) Upload Your Data: test the exact same pipeline against an external CSV dataset
-
 Run locally: streamlit run app/main.py
 Deploy: push to GitHub and deploy on share.streamlit.io
 """
@@ -32,26 +26,21 @@ import ml_anomaly
 st.set_page_config(page_title="FleetOps AI | XCMG Innovation Track", page_icon="🚧", layout="wide")
 
 # ---------------------------------------------------------------------------
-# Brand palette (inspired by XCMG's engineering-red / steel-charcoal identity)
+# Brand palette
 # ---------------------------------------------------------------------------
 RED = "#C8102E"        # XCMG engineering red
 RED_DARK = "#8C0B20"
 CHARCOAL = "#1D2126"   # steel charcoal
 CHARCOAL_2 = "#2B3038"
 STEEL = "#5A6472"
-CONCRETE = "#F3F4F6"   # light neutral background
 GOLD = "#F2A900"       # safety-yellow accent
-WHITE = "#FFFFFF"
-GREEN = "#1E8E5A"
 
 REQUIRED_EQUIP_COLS = {"equipment_id", "equipment_type", "project"}
 REQUIRED_DAILY_COLS = {"date", "equipment_id", "equipment_type", "project",
                         "operating_hours", "downtime_hours", "fuel_consumption_l", "maintenance_flag"}
 
-SEQ_RED = [STEEL, "#D94B5C", RED, RED_DARK]  # sequential palette for charts
-
 # ---------------------------------------------------------------------------
-# Global CSS — industrial / engineering look
+# Global CSS — Dynamic Light/Dark Mode Responsive Design
 # ---------------------------------------------------------------------------
 st.markdown(f"""
 <style>
@@ -82,53 +71,51 @@ footer {{visibility: hidden;}}
     background: {RED};
     display: flex; align-items: center; justify-content: center;
     font-family: 'Barlow Condensed', sans-serif;
-    font-weight: 700; color: white; font-size: 22px;
+    font-weight: 700; color: white !important; font-size: 22px;
     flex-shrink: 0;
 }}
 .xcmg-title {{
     font-family: 'Barlow Condensed', sans-serif;
-    font-weight: 700; font-size: 26px; color: white; letter-spacing: 0.5px; line-height: 1.1;
+    font-weight: 700; font-size: 26px; color: white !important; letter-spacing: 0.5px; line-height: 1.1;
 }}
-.xcmg-subtitle {{ color: #B8BFC9; font-size: 12.5px; margin-top: 2px; }}
+.xcmg-subtitle {{ color: #B8BFC9 !important; font-size: 12.5px; margin-top: 2px; }}
 .xcmg-pill {{
     background: rgba(200,16,46,0.18); border: 1px solid {RED};
-    color: #FF8C9A; padding: 6px 14px; border-radius: 20px;
+    color: #FF8C9A !important; padding: 6px 14px; border-radius: 20px;
     font-size: 11.5px; font-weight: 600; white-space: nowrap;
 }}
 
-/* KPI cards */
+/* KPI cards — Theme Adaptive */
 .kpi-card {{
-    background: {WHITE}; border-radius: 8px; padding: 16px 18px;
+    background-color: var(--background-secondary-color, rgba(125, 125, 125, 0.08));
+    border-radius: 8px; padding: 16px 18px;
     border-left: 4px solid {RED};
-    box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
     height: 100%;
 }}
-.kpi-label {{ font-size: 12px; color: {STEEL}; font-weight: 600; text-transform: uppercase; letter-spacing: 0.4px; }}
-.kpi-value {{ font-family: 'Barlow Condensed', sans-serif; font-size: 30px; font-weight: 700; color: {CHARCOAL}; margin-top: 2px; }}
+.kpi-label {{ font-size: 12px; color: var(--text-color-subtle, {STEEL}); font-weight: 600; text-transform: uppercase; letter-spacing: 0.4px; }}
+.kpi-value {{ font-family: 'Barlow Condensed', sans-serif; font-size: 30px; font-weight: 700; color: var(--text-color, {CHARCOAL}); margin-top: 2px; }}
 
-/* Section headers */
+/* Section headers — Theme Adaptive */
 .section-header {{
     font-family: 'Barlow Condensed', sans-serif; font-weight: 700; font-size: 20px;
-    color: {CHARCOAL}; border-left: 5px solid {RED}; padding-left: 10px; margin: 6px 0 10px 0;
+    color: var(--text-color, {CHARCOAL}); border-left: 5px solid {RED}; padding-left: 10px; margin: 6px 0 10px 0;
 }}
 
-/* Tabs */
+/* Tabs — Theme Adaptive */
 .stTabs [data-baseweb="tab-list"] {{ gap: 4px; }}
-.stTabs [data-baseweb="tab"] {{
-    background: {CONCRETE}; border-radius: 6px 6px 0 0; padding: 8px 18px; font-weight: 600; color: {STEEL};
-}}
-.stTabs [aria-selected="true"] {{ background: {WHITE}; color: {RED} !important; border-bottom: 3px solid {RED}; }}
+.stTabs [aria-selected="true"] {{ color: {RED} !important; border-bottom: 3px solid {RED}; }}
 
 /* Buttons */
 .stButton > button, .stDownloadButton > button {{
-    background: {CHARCOAL}; color: white; border: none; border-radius: 6px; font-weight: 600;
+    background-color: {CHARCOAL}; color: white !important; border: none; border-radius: 6px; font-weight: 600;
 }}
-.stButton > button:hover, .stDownloadButton > button:hover {{ background: {RED}; }}
+.stButton > button:hover, .stDownloadButton > button:hover {{ background-color: {RED}; }}
 
 /* Footer strip */
 .xcmg-footer {{
     margin-top: 30px; padding: 14px 20px; background: {CHARCOAL}; border-radius: 6px;
-    color: #9AA3AF; font-size: 11.5px; text-align: center; border-top: 3px solid {RED};
+    color: #9AA3AF !important; font-size: 11.5px; text-align: center; border-top: 3px solid {RED};
 }}
 </style>
 """, unsafe_allow_html=True)
@@ -149,13 +136,13 @@ def section(title):
 
 def style_fig(fig, height=380):
     fig.update_layout(
-        height=height, plot_bgcolor="white", paper_bgcolor="white",
-        font=dict(family="Inter, sans-serif", color=CHARCOAL, size=12),
+        height=height, plot_bgcolor="rgba(0,0,0,0)", paper_bgcolor="rgba(0,0,0,0)",
+        font=dict(family="Inter, sans-serif", size=12),
         margin=dict(t=10, b=10, l=10, r=10),
         legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="left", x=0),
     )
-    fig.update_xaxes(gridcolor="#EEF0F2", linecolor="#D8DCE1")
-    fig.update_yaxes(gridcolor="#EEF0F2", linecolor="#D8DCE1")
+    fig.update_xaxes(gridcolor="rgba(128,128,128,0.2)", linecolor="rgba(128,128,128,0.3)")
+    fig.update_yaxes(gridcolor="rgba(128,128,128,0.2)", linecolor="rgba(128,128,128,0.3)")
     return fig
 
 
@@ -168,7 +155,7 @@ with st.sidebar:
         <div style="width:34px;height:34px;border-radius:5px;background:{RED};
                     display:flex;align-items:center;justify-content:center;
                     font-family:'Barlow Condensed',sans-serif;font-weight:700;color:white;font-size:16px;">F</div>
-        <div style="font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:19px;color:{CHARCOAL};">FleetOps AI</div>
+        <div style="font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:19px;">FleetOps AI</div>
     </div>
     """, unsafe_allow_html=True)
     st.caption("AI Operations Agent for Construction Equipment")
@@ -290,7 +277,7 @@ with tab_overview:
 with tab_chat:
     section("Ask the AI agent about your fleet")
     st.caption("Try: 'Which equipment has the highest downtime?' / 'Which equipment needs urgent attention?' "
-               "/ 'What\'s causing the fuel increase?' / 'Give me a unified priority ranking'")
+               "/ 'What\\'s causing the fuel increase?' / 'Give me a unified priority ranking'")
 
     if "chat_history" not in st.session_state:
         st.session_state.chat_history = []
