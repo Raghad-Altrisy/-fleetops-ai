@@ -270,10 +270,10 @@ status_rows = [
     ["4", "AI agent tool library", "Done"],
     ["5", "LLM integration & agent logic", "Done"],
     ["6", "Streamlit dashboard (overview, chat, reports)", "Done"],
-    ["7", "Advanced features (deeper anomaly detection)", "Planned"],
-    ["8", "Testing & refinement", "Planned"],
-    ["9", "Documentation & presentation", "In progress (this report)"],
-    ["10", "Final review & submission", "Planned"],
+    ["7", "Advanced anomaly detection + Attention Score", "Done"],
+    ["8", "Testing & refinement", "Done (16/16 tests)"],
+    ["9", "Documentation & presentation", "Done"],
+    ["10", "Final review & submission", "Done"],
 ]
 t5 = Table(status_rows, colWidths=[0.7*inch, 3.7*inch, 1.7*inch])
 t5.setStyle(TableStyle([

@@ -114,9 +114,11 @@ user's question. Never invent numbers; use only the data returned by the tools."
 # ---------------------------------------------------------------------------
 # REAL MODE: استدعاء OpenAI API فعليًا (Function Calling)
 # ---------------------------------------------------------------------------
-def ask_agent_real(user_question: str) -> str:
+def ask_agent_real(user_question: str, api_key: str | None = None) -> str:
     from openai import OpenAI
-    client = OpenAI()  # يقرأ OPENAI_API_KEY من البيئة تلقائيًا
+    # Prefer an explicitly supplied key (e.g. from the Streamlit session).
+    # Fall back to OPENAI_API_KEY for CLI/deployment environments.
+    client = OpenAI(api_key=api_key) if api_key else OpenAI()
 
     messages = [
         {"role": "system", "content": SYSTEM_PROMPT},
@@ -239,9 +241,10 @@ def ask_agent_test(user_question: str) -> str:
 # ---------------------------------------------------------------------------
 # نقطة الدخول الموحدة: يختار real أو test تلقائيًا
 # ---------------------------------------------------------------------------
-def ask_agent(user_question: str) -> str:
-    if os.getenv("OPENAI_API_KEY"):
-        return ask_agent_real(user_question)
+def ask_agent(user_question: str, api_key: str | None = None) -> str:
+    configured_key = api_key or os.getenv("OPENAI_API_KEY")
+    if configured_key:
+        return ask_agent_real(user_question, api_key=configured_key)
     return ask_agent_test(user_question)
 
 

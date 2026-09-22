@@ -1,0 +1,12 @@
+{
+  "name": "fleetops-ai-tools",
+  "private": true,
+  "version": "1.0.0",
+  "description": "Builds the FleetOps AI presentation artifact.",
+  "scripts": {
+    "build:presentation": "node src/build_presentation.js"
+  },
+  "dependencies": {
+    "pptxgenjs": "^3.12.0"
+  }
+}
