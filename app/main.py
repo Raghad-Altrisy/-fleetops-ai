@@ -40,7 +40,7 @@ REQUIRED_DAILY_COLS = {"date", "equipment_id", "equipment_type", "project",
                         "operating_hours", "downtime_hours", "fuel_consumption_l", "maintenance_flag"}
 
 # ---------------------------------------------------------------------------
-# Global CSS — Dynamic Light/Dark Mode Responsive Design
+# Global CSS — Force High Contrast & Crystal Clear Text on Dark/Light Mode
 # ---------------------------------------------------------------------------
 st.markdown(f"""
 <style>
@@ -71,46 +71,46 @@ footer {{visibility: hidden;}}
     background: {RED};
     display: flex; align-items: center; justify-content: center;
     font-family: 'Barlow Condensed', sans-serif;
-    font-weight: 700; color: white !important; font-size: 22px;
+    font-weight: 700; color: #FFFFFF !important; font-size: 22px;
     flex-shrink: 0;
 }}
 .xcmg-title {{
     font-family: 'Barlow Condensed', sans-serif;
-    font-weight: 700; font-size: 26px; color: white !important; letter-spacing: 0.5px; line-height: 1.1;
+    font-weight: 700; font-size: 26px; color: #FFFFFF !important; letter-spacing: 0.5px; line-height: 1.1;
 }}
-.xcmg-subtitle {{ color: #B8BFC9 !important; font-size: 12.5px; margin-top: 2px; }}
+.xcmg-subtitle {{ color: #D0D7DE !important; font-size: 12.5px; margin-top: 2px; }}
 .xcmg-pill {{
-    background: rgba(200,16,46,0.18); border: 1px solid {RED};
+    background: rgba(200,16,46,0.25); border: 1px solid {RED};
     color: #FF8C9A !important; padding: 6px 14px; border-radius: 20px;
     font-size: 11.5px; font-weight: 600; white-space: nowrap;
 }}
 
-/* KPI cards — Theme Adaptive */
+/* KPI Cards - Solid Dark High-Contrast Panel */
 .kpi-card {{
-    background-color: var(--background-secondary-color, rgba(125, 125, 125, 0.08));
+    background-color: #23272E !important;
     border-radius: 8px; padding: 16px 18px;
-    border-left: 4px solid {RED};
-    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+    border-left: 5px solid {RED};
+    box-shadow: 0 2px 6px rgba(0,0,0,0.3);
     height: 100%;
 }}
-.kpi-label {{ font-size: 12px; color: var(--text-color-subtle, {STEEL}); font-weight: 600; text-transform: uppercase; letter-spacing: 0.4px; }}
-.kpi-value {{ font-family: 'Barlow Condensed', sans-serif; font-size: 30px; font-weight: 700; color: var(--text-color, {CHARCOAL}); margin-top: 2px; }}
+.kpi-label {{ font-size: 12px; color: #A0AEC0 !important; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; }}
+.kpi-value {{ font-family: 'Barlow Condensed', sans-serif; font-size: 32px; font-weight: 700; color: #FFFFFF !important; margin-top: 2px; }}
 
-/* Section headers — Theme Adaptive */
+/* Section Headers - Always Bright White & Clear */
 .section-header {{
-    font-family: 'Barlow Condensed', sans-serif; font-weight: 700; font-size: 20px;
-    color: var(--text-color, {CHARCOAL}); border-left: 5px solid {RED}; padding-left: 10px; margin: 6px 0 10px 0;
+    font-family: 'Barlow Condensed', sans-serif; font-weight: 700; font-size: 22px;
+    color: #F0F4F8 !important; border-left: 5px solid {RED}; padding-left: 10px; margin: 12px 0 10px 0;
 }}
 
-/* Tabs — Theme Adaptive */
-.stTabs [data-baseweb="tab-list"] {{ gap: 4px; }}
+/* Tabs Styling */
+.stTabs [data-baseweb="tab-list"] {{ gap: 6px; }}
 .stTabs [aria-selected="true"] {{ color: {RED} !important; border-bottom: 3px solid {RED}; }}
 
 /* Buttons */
 .stButton > button, .stDownloadButton > button {{
-    background-color: {CHARCOAL}; color: white !important; border: none; border-radius: 6px; font-weight: 600;
+    background-color: {CHARCOAL_2}; color: #FFFFFF !important; border: 1px solid #444C56; border-radius: 6px; font-weight: 600;
 }}
-.stButton > button:hover, .stDownloadButton > button:hover {{ background-color: {RED}; }}
+.stButton > button:hover, .stDownloadButton > button:hover {{ background-color: {RED}; border-color: {RED}; }}
 
 /* Footer strip */
 .xcmg-footer {{
@@ -137,12 +137,12 @@ def section(title):
 def style_fig(fig, height=380):
     fig.update_layout(
         height=height, plot_bgcolor="rgba(0,0,0,0)", paper_bgcolor="rgba(0,0,0,0)",
-        font=dict(family="Inter, sans-serif", size=12),
-        margin=dict(t=10, b=10, l=10, r=10),
-        legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="left", x=0),
+        font=dict(family="Inter, sans-serif", color="#E6EDF3", size=12),
+        margin=dict(t=20, b=20, l=10, r=10),
+        legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="left", x=0, font=dict(color="#E6EDF3")),
     )
-    fig.update_xaxes(gridcolor="rgba(128,128,128,0.2)", linecolor="rgba(128,128,128,0.3)")
-    fig.update_yaxes(gridcolor="rgba(128,128,128,0.2)", linecolor="rgba(128,128,128,0.3)")
+    fig.update_xaxes(gridcolor="#30363D", linecolor="#484F58", tickfont=dict(color="#C9D1D9"))
+    fig.update_yaxes(gridcolor="#30363D", linecolor="#484F58", tickfont=dict(color="#C9D1D9"))
     return fig
 
 
@@ -155,7 +155,7 @@ with st.sidebar:
         <div style="width:34px;height:34px;border-radius:5px;background:{RED};
                     display:flex;align-items:center;justify-content:center;
                     font-family:'Barlow Condensed',sans-serif;font-weight:700;color:white;font-size:16px;">F</div>
-        <div style="font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:19px;">FleetOps AI</div>
+        <div style="font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:19px;color:#F0F4F8;">FleetOps AI</div>
     </div>
     """, unsafe_allow_html=True)
     st.caption("AI Operations Agent for Construction Equipment")
@@ -277,7 +277,7 @@ with tab_overview:
 with tab_chat:
     section("Ask the AI agent about your fleet")
     st.caption("Try: 'Which equipment has the highest downtime?' / 'Which equipment needs urgent attention?' "
-               "/ 'What\\'s causing the fuel increase?' / 'Give me a unified priority ranking'")
+               "/ 'What\'s causing the fuel increase?' / 'Give me a unified priority ranking'")
 
     if "chat_history" not in st.session_state:
         st.session_state.chat_history = []
