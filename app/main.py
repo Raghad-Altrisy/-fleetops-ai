@@ -377,13 +377,23 @@ with tab_upload:
                 if missing_d:
                     st.error(f"fleet_daily_logs.csv is missing required columns: {sorted(missing_d)}")
             else:
+                # التحقق مما إذا كانت البيانات جديدة ليتم تحديث الشاشة مرة واحدة فقط
                 tools.set_data_source(new_equip, new_daily)
+                if not st.session_state.get("custom_data_active", False):
+                    st.session_state["custom_data_active"] = True
+                    st.rerun()
                 st.success(f"✅ Loaded {new_equip['equipment_id'].nunique()} units, "
                            f"{len(new_daily)} daily records. Switch to the Overview or Ask the Agent "
                            "tabs — they now use your uploaded data.")
                 st.dataframe(new_daily.head(10), use_container_width=True)
         except Exception as e:
             st.error(f"Could not read the uploaded files: {e}")
+    else:
+        # إذا تم حذف أحد الملفين أو إزالتهما من قبل المستخدم، يتم إعادة التعيين للبيانات الافتراضية تلقائياً
+        if tools.using_custom_data():
+            tools.reset_data_source()
+            st.session_state["custom_data_active"] = False
+            st.rerun()
 
 # ---------------------------------------------------------------------------
 # Footer
