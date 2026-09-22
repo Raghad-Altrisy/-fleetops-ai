@@ -114,11 +114,9 @@ user's question. Never invent numbers; use only the data returned by the tools."
 # ---------------------------------------------------------------------------
 # REAL MODE: استدعاء OpenAI API فعليًا (Function Calling)
 # ---------------------------------------------------------------------------
-def ask_agent_real(user_question: str, api_key: str | None = None) -> str:
+def ask_agent_real(user_question: str) -> str:
     from openai import OpenAI
-    # Prefer an explicitly supplied key (e.g. from the Streamlit session).
-    # Fall back to OPENAI_API_KEY for CLI/deployment environments.
-    client = OpenAI(api_key=api_key) if api_key else OpenAI()
+    client = OpenAI()  # يقرأ OPENAI_API_KEY من البيئة تلقائيًا
 
     messages = [
         {"role": "system", "content": SYSTEM_PROMPT},
@@ -177,56 +175,56 @@ def _summarize(tool_name: str, result: dict) -> str:
         return f"⚠️ {result['error']}"
 
     if tool_name == "get_top_downtime_equipment":
-        lines = ["🔧 **Equipment ranked by downtime:**\n"]
+        lines = ["🔧 Equipment ranked by downtime:"]
         for r in result["data"]:
-            lines.append(f"• **{r['equipment_id']}** ({r['equipment_type']}, {r['project']}) — "
-                         f"downtime **{r['downtime_rate_%']}%** | maintenance **{r['maintenance_events']}x**")
+            lines.append(f"  • {r['equipment_id']} ({r['equipment_type']}, {r['project']}) — "
+                         f"downtime {r['downtime_rate_%']}% | maintenance {r['maintenance_events']}x")
         return "\n".join(lines)
 
     if tool_name == "get_equipment_needing_attention":
         if not result["data"]:
             return "✅ No equipment currently needs immediate attention."
-        lines = ["🚨 **Equipment needing immediate attention:**\n"]
+        lines = ["🚨 Equipment needing immediate attention:"]
         for r in result["data"]:
-            lines.append(f"• **{r['equipment_id']}** ({r['equipment_type']}, {r['project']}) — **Reason:** {r['reason']}")
+            lines.append(f"  • {r['equipment_id']} ({r['equipment_type']}, {r['project']}) — Reason: {r['reason']}")
         return "\n".join(lines)
 
     if tool_name == "explain_utilization_trend":
         direction = "declining 📉" if result["change_%"] < 0 else "rising/stable 📈"
         return (
-            f"📊 **Utilization rate in ({result['scope']}):** from **{result['first_3_weeks_avg_%']}%** "
-            f"to **{result['last_3_weeks_avg_%']}%** ({direction}, change **{result['change_%']}%**).\n\n"
-            f"💡 **Likely driver:** elevated downtime recently in **'{result['likely_driver_equipment_type']}'** units."
+            f"📊 Utilization rate in ({result['scope']}): from {result['first_3_weeks_avg_%']}% "
+            f"to {result['last_3_weeks_avg_%']}% ({direction}, change {result['change_%']}%).\n"
+            f"Likely driver: elevated downtime recently in '{result['likely_driver_equipment_type']}' units."
         )
 
     if tool_name == "analyze_fuel_consumption":
         if result["anomalies_found"] == 0:
             return "✅ No abnormal fuel-consumption spikes detected currently."
-        lines = [f"⛽ **{result['anomalies_found']} fuel-consumption anomaly(ies) detected:**\n"]
+        lines = [f"⛽ {result['anomalies_found']} fuel-consumption anomaly(ies) detected:"]
         for r in result["data"]:
-            lines.append(f"• **{r['equipment_id']}** ({r['equipment_type']}) — **{r['flag']}** of {r['change_%']}% "
+            lines.append(f"  • {r['equipment_id']} ({r['equipment_type']}) — {r['flag']} of {r['change_%']}% "
                          f"({r['baseline_l_per_hr']} → {r['recent_l_per_hr']} L/hr)")
-        lines.append("\n💡 **Recommendation:** schedule an immediate mechanical inspection (leak/filter/engine) for the units above.")
+        lines.append("💡 Recommendation: schedule an immediate mechanical inspection (leak/filter/engine) for the units above.")
         return "\n".join(lines)
 
     if tool_name == "generate_fleet_report":
         lines = [
-            f"📋 **Fleet Performance Report ({result['period']})**\n",
-            f"• **Fleet size:** {result['fleet_size']}",
-            f"• **Overall utilization rate:** {result['overall_utilization_%']}%",
-            f"• **Total operating hours:** {result['total_operating_hours']} | **Downtime:** {result['total_downtime_hours']}",
-            f"• **Total fuel consumption:** {result['total_fuel_l']} L",
-            f"• **Top 3 downtime issues:** " + ", ".join(f"**{d['equipment_id']}**" for d in result["top_downtime_equipment"]),
+            f"📋 Fleet Performance Report ({result['period']})",
+            f"  • Fleet size: {result['fleet_size']}",
+            f"  • Overall utilization rate: {result['overall_utilization_%']}%",
+            f"  • Total operating hours: {result['total_operating_hours']} | Downtime: {result['total_downtime_hours']}",
+            f"  • Total fuel consumption: {result['total_fuel_l']} L",
+            "  • Top 3 downtime issues: " + ", ".join(d["equipment_id"] for d in result["top_downtime_equipment"]),
         ]
         if result["fuel_anomalies"]:
-            lines.append(f"• **Fuel alert:** " + ", ".join(f"**{a['equipment_id']}**" for a in result["fuel_anomalies"]))
+            lines.append("  • Fuel alert: " + ", ".join(a["equipment_id"] for a in result["fuel_anomalies"]))
         return "\n".join(lines)
 
     if tool_name == "compute_attention_scores":
-        lines = ["🎯 **Equipment ranked by unified Attention Score (0-100):**\n"]
+        lines = ["🎯 Equipment ranked by unified Attention Score (0-100):"]
         for r in result["data"][:10]:
-            lines.append(f"• **{r['equipment_id']}** ({r['equipment_type']}, {r['project']}) — "
-                         f"Attention Score: **{r['attention_score']}/100**")
+            lines.append(f"  • {r['equipment_id']} ({r['equipment_type']}, {r['project']}) — "
+                         f"Attention Score: {r['attention_score']}/100")
         return "\n".join(lines)
 
     return json.dumps(result, ensure_ascii=False, default=str)
@@ -241,10 +239,9 @@ def ask_agent_test(user_question: str) -> str:
 # ---------------------------------------------------------------------------
 # نقطة الدخول الموحدة: يختار real أو test تلقائيًا
 # ---------------------------------------------------------------------------
-def ask_agent(user_question: str, api_key: str | None = None) -> str:
-    configured_key = api_key or os.getenv("OPENAI_API_KEY")
-    if configured_key:
-        return ask_agent_real(user_question, api_key=configured_key)
+def ask_agent(user_question: str) -> str:
+    if os.getenv("OPENAI_API_KEY"):
+        return ask_agent_real(user_question)
     return ask_agent_test(user_question)
 
 

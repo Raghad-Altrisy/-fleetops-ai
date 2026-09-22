@@ -49,7 +49,15 @@ story.append(Paragraph("Track: AI + Construction Machinery &rarr; AI + Operation
                                        textColor=colors.HexColor("#777777"), spaceAfter=2)))
 story.append(Paragraph("15th China International College Students' Innovation &amp; Entrepreneurship Competition",
                         ParagraphStyle("covermeta3", fontSize=10.5, alignment=TA_CENTER,
-                                       textColor=colors.HexColor("#999999"))))
+                                       textColor=colors.HexColor("#999999"), spaceAfter=15)))
+story.append(HRFlowable(width="25%", thickness=0.8, color=ORANGE, hAlign="CENTER"))
+story.append(Spacer(1, 0.2 * inch))
+story.append(Paragraph("<b>Prepared by: FleetOps AI Team</b>",
+                        ParagraphStyle("teamtitle", fontSize=11, alignment=TA_CENTER,
+                                       textColor=NAVY, fontName="Helvetica-Bold", spaceAfter=6)))
+story.append(Paragraph("<b>Project Leader:</b> Raghad Altrisy<br/><b>Core Members:</b> Taif Alharbi &bull; Jood Alwajeeh",
+                        ParagraphStyle("teamnames", fontSize=10, alignment=TA_CENTER,
+                                       textColor=colors.HexColor("#444444"), spaceAfter=0)))
 story.append(PageBreak())
 
 # =============================================================================
@@ -270,10 +278,10 @@ status_rows = [
     ["4", "AI agent tool library", "Done"],
     ["5", "LLM integration & agent logic", "Done"],
     ["6", "Streamlit dashboard (overview, chat, reports)", "Done"],
-    ["7", "Advanced anomaly detection + Attention Score", "Done"],
-    ["8", "Testing & refinement", "Done (16/16 tests)"],
-    ["9", "Documentation & presentation", "Done"],
-    ["10", "Final review & submission", "Done"],
+    ["7", "Advanced features (deeper anomaly detection)", "Planned"],
+    ["8", "Testing & refinement", "Planned"],
+    ["9", "Documentation & presentation", "In progress (this report)"],
+    ["10", "Final review & submission", "Planned"],
 ]
 t5 = Table(status_rows, colWidths=[0.7*inch, 3.7*inch, 1.7*inch])
 t5.setStyle(TableStyle([

@@ -32,16 +32,16 @@ import ml_anomaly
 st.set_page_config(page_title="FleetOps AI | XCMG Innovation Track", page_icon="🚧", layout="wide")
 
 # ---------------------------------------------------------------------------
-# Brand palette (Dark Industrial Look inspired by XCMG's identity)
+# Brand palette (inspired by XCMG's engineering-red / steel-charcoal identity)
 # ---------------------------------------------------------------------------
 RED = "#C8102E"        # XCMG engineering red
 RED_DARK = "#8C0B20"
-CHARCOAL = "#12161A"   # Main background
-CHARCOAL_2 = "#1A1F26" # Secondary dark
-CARD_BG = "#1E232A"    # Dark card background
-STEEL = "#9CA3AF"      # Light grey text for dark backgrounds
+CHARCOAL = "#1D2126"   # steel charcoal
+CHARCOAL_2 = "#2B3038"
+STEEL = "#5A6472"
+CONCRETE = "#F3F4F6"   # light neutral background
+GOLD = "#F2A900"       # safety-yellow accent
 WHITE = "#FFFFFF"
-GOLD = "#F2A900"       # Safety-yellow accent
 GREEN = "#1E8E5A"
 
 REQUIRED_EQUIP_COLS = {"equipment_id", "equipment_type", "project"}
@@ -51,7 +51,7 @@ REQUIRED_DAILY_COLS = {"date", "equipment_id", "equipment_type", "project",
 SEQ_RED = [STEEL, "#D94B5C", RED, RED_DARK]  # sequential palette for charts
 
 # ---------------------------------------------------------------------------
-# Global CSS — industrial / dark theme engineering look
+# Global CSS — industrial / engineering look
 # ---------------------------------------------------------------------------
 st.markdown(f"""
 <style>
@@ -61,7 +61,7 @@ html, body, [class*="css"] {{
     font-family: 'Inter', -apple-system, sans-serif;
 }}
 
-/* Hide default Streamlit chrome */
+/* Hide default Streamlit chrome for a cleaner branded look */
 #MainMenu {{visibility: hidden;}}
 footer {{visibility: hidden;}}
 
@@ -70,7 +70,7 @@ footer {{visibility: hidden;}}
     background: linear-gradient(90deg, {CHARCOAL} 0%, {CHARCOAL_2} 100%);
     border-bottom: 4px solid {RED};
     padding: 18px 28px;
-    border-radius: 8px;
+    border-radius: 6px;
     display: flex;
     align-items: center;
     justify-content: space-between;
@@ -91,36 +91,43 @@ footer {{visibility: hidden;}}
 }}
 .xcmg-subtitle {{ color: #B8BFC9; font-size: 12.5px; margin-top: 2px; }}
 .xcmg-pill {{
-    background: rgba(200,16,46,0.22); border: 1px solid {RED};
+    background: rgba(200,16,46,0.18); border: 1px solid {RED};
     color: #FF8C9A; padding: 6px 14px; border-radius: 20px;
     font-size: 11.5px; font-weight: 600; white-space: nowrap;
 }}
 
 /* KPI cards */
 .kpi-card {{
-    background: {CARD_BG}; border-radius: 8px; padding: 16px 18px;
+    background: {WHITE}; border-radius: 8px; padding: 16px 18px;
     border-left: 4px solid {RED};
-    box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+    box-shadow: 0 1px 3px rgba(0,0,0,0.08);
     height: 100%;
 }}
 .kpi-label {{ font-size: 12px; color: {STEEL}; font-weight: 600; text-transform: uppercase; letter-spacing: 0.4px; }}
-.kpi-value {{ font-family: 'Barlow Condensed', sans-serif; font-size: 30px; font-weight: 700; color: {WHITE}; margin-top: 2px; }}
+.kpi-value {{ font-family: 'Barlow Condensed', sans-serif; font-size: 30px; font-weight: 700; color: {CHARCOAL}; margin-top: 2px; }}
 
 /* Section headers */
 .section-header {{
     font-family: 'Barlow Condensed', sans-serif; font-weight: 700; font-size: 20px;
-    color: {WHITE}; border-left: 5px solid {RED}; padding-left: 10px; margin: 10px 0 12px 0;
+    color: {CHARCOAL}; border-left: 5px solid {RED}; padding-left: 10px; margin: 6px 0 10px 0;
 }}
+
+/* Tabs */
+.stTabs [data-baseweb="tab-list"] {{ gap: 4px; }}
+.stTabs [data-baseweb="tab"] {{
+    background: {CONCRETE}; border-radius: 6px 6px 0 0; padding: 8px 18px; font-weight: 600; color: {STEEL};
+}}
+.stTabs [aria-selected="true"] {{ background: {WHITE}; color: {RED} !important; border-bottom: 3px solid {RED}; }}
 
 /* Buttons */
 .stButton > button, .stDownloadButton > button {{
-    background: {CHARCOAL_2}; color: white; border: 1px solid {STEEL}; border-radius: 6px; font-weight: 600;
+    background: {CHARCOAL}; color: white; border: none; border-radius: 6px; font-weight: 600;
 }}
-.stButton > button:hover, .stDownloadButton > button:hover {{ background: {RED}; border-color: {RED}; }}
+.stButton > button:hover, .stDownloadButton > button:hover {{ background: {RED}; }}
 
 /* Footer strip */
 .xcmg-footer {{
-    margin-top: 30px; padding: 14px 20px; background: {CHARCOAL_2}; border-radius: 6px;
+    margin-top: 30px; padding: 14px 20px; background: {CHARCOAL}; border-radius: 6px;
     color: #9AA3AF; font-size: 11.5px; text-align: center; border-top: 3px solid {RED};
 }}
 </style>
@@ -142,13 +149,13 @@ def section(title):
 
 def style_fig(fig, height=380):
     fig.update_layout(
-        height=height, plot_bgcolor=CARD_BG, paper_bgcolor=CARD_BG,
-        font=dict(family="Inter, sans-serif", color=WHITE, size=12),
+        height=height, plot_bgcolor="white", paper_bgcolor="white",
+        font=dict(family="Inter, sans-serif", color=CHARCOAL, size=12),
         margin=dict(t=10, b=10, l=10, r=10),
-        legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="left", x=0, font=dict(color=WHITE)),
+        legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="left", x=0),
     )
-    fig.update_xaxes(gridcolor="#2D333C", linecolor="#4B5563", tickfont=dict(color=WHITE), title_font=dict(color=WHITE))
-    fig.update_yaxes(gridcolor="#2D333C", linecolor="#4B5563", tickfont=dict(color=WHITE), title_font=dict(color=WHITE))
+    fig.update_xaxes(gridcolor="#EEF0F2", linecolor="#D8DCE1")
+    fig.update_yaxes(gridcolor="#EEF0F2", linecolor="#D8DCE1")
     return fig
 
 
@@ -161,20 +168,18 @@ with st.sidebar:
         <div style="width:34px;height:34px;border-radius:5px;background:{RED};
                     display:flex;align-items:center;justify-content:center;
                     font-family:'Barlow Condensed',sans-serif;font-weight:700;color:white;font-size:16px;">F</div>
-        <div style="font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:19px;color:{WHITE};">FleetOps AI</div>
+        <div style="font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:19px;color:{CHARCOAL};">FleetOps AI</div>
     </div>
     """, unsafe_allow_html=True)
     st.caption("AI Operations Agent for Construction Equipment")
 
     st.divider()
     api_key = st.text_input("OpenAI API Key (optional)", type="password",
-                           help="If provided, chat answers are generated by a real LLM (function calling). "
-                                "If left empty, the app runs in Test Mode (rule-based, no API key required).")
+                             help="If provided, chat answers are generated by a real LLM (function calling). "
+                                  "If left empty, the app runs in Test Mode (rule-based, no API key required).")
     if api_key:
+        os.environ["OPENAI_API_KEY"] = api_key
         st.success("✅ Real Mode enabled (OpenAI)")
-        st.caption("Your key is used for this session and is not written to the process environment.")
-    elif os.getenv("OPENAI_API_KEY"):
-        st.success("✅ Real Mode enabled (deployment environment)")
     else:
         st.info("ℹ️ Running in Test Mode (no live LLM)")
 
@@ -183,6 +188,7 @@ with st.sidebar:
         st.warning("📂 Using your uploaded dataset")
         if st.button("Reset to sample data"):
             tools.reset_data_source()
+            st.session_state["custom_data_active"] = False
             st.rerun()
     else:
         st.caption("📊 Using bundled sample dataset (30 units, 90 days)")
@@ -249,7 +255,7 @@ with tab_overview:
         top_downtime = pd.DataFrame(tools.get_top_downtime_equipment(8)["data"])
         fig = px.bar(top_downtime, x="equipment_id", y="downtime_rate_%",
                      color="equipment_type", text="downtime_rate_%",
-                     color_discrete_sequence=["#4B5563", STEEL, RED, GOLD, RED_DARK, "#8A94A3"])
+                     color_discrete_sequence=[CHARCOAL, STEEL, RED, GOLD, RED_DARK, "#8A94A3"])
         st.plotly_chart(style_fig(fig), use_container_width=True)
 
     with col2:
@@ -283,8 +289,8 @@ with tab_overview:
 # ============================== TAB 2: CHAT ==============================
 with tab_chat:
     section("Ask the AI agent about your fleet")
-    st.caption("Try: \"Which equipment has the highest downtime?\" / \"Which equipment needs urgent attention?\" "
-               "/ \"What's causing the fuel increase?\" / \"Give me a unified priority ranking\"")
+    st.caption("Try: "Which equipment has the highest downtime?" / "Which equipment needs urgent attention?" "
+               "/ "What's causing the fuel increase?" / "Give me a unified priority ranking"")
 
     if "chat_history" not in st.session_state:
         st.session_state.chat_history = []
@@ -301,10 +307,7 @@ with tab_chat:
 
         with st.chat_message("assistant"):
             with st.spinner("Analyzing..."):
-                if api_key:
-                    answer = agent.ask_agent(user_q, api_key=api_key)
-                else:
-                    answer = agent.ask_agent(user_q)
+                answer = agent.ask_agent(user_q)
                 st.markdown(answer)
         st.session_state.chat_history.append(("assistant", answer))
 
@@ -377,7 +380,6 @@ with tab_upload:
                 if missing_d:
                     st.error(f"fleet_daily_logs.csv is missing required columns: {sorted(missing_d)}")
             else:
-                # التحقق مما إذا كانت البيانات جديدة ليتم تحديث الشاشة مرة واحدة فقط
                 tools.set_data_source(new_equip, new_daily)
                 if not st.session_state.get("custom_data_active", False):
                     st.session_state["custom_data_active"] = True
@@ -389,7 +391,6 @@ with tab_upload:
         except Exception as e:
             st.error(f"Could not read the uploaded files: {e}")
     else:
-        # إذا تم حذف أحد الملفين أو إزالتهما من قبل المستخدم، يتم إعادة التعيين للبيانات الافتراضية تلقائياً
         if tools.using_custom_data():
             tools.reset_data_source()
             st.session_state["custom_data_active"] = False
