@@ -148,6 +148,160 @@ record("TC-08a", "Project report PDF generated successfully", "File exists, size
 record("TC-08b", "Presentation PPTX generated successfully", "File exists, size > 1KB",
        f"Exists={os.path.exists('presentation/FleetOps_AI_Presentation.pptx')}", ok_pptx)
 
+
+# --------------------------------------------------------------------------
+# TC-09: Regression - explicit Top-N is respected across agent routes
+# --------------------------------------------------------------------------
+try:
+    tool_name, args = agent._route_question("Show ONLY the top 3 equipment units with the highest downtime.")
+    result = agent.TOOL_FUNCTIONS[tool_name](**args)
+    ok = tool_name == "get_top_downtime_equipment" and len(result["data"]) == 3
+    record("TC-09a", "Top-N respected for downtime", "Exactly 3 units", f"{len(result['data'])} units", ok)
+except Exception as e:
+    record("TC-09a", "Top-N respected for downtime", "Exactly 3 units", f"Exception: {e}", False)
+
+try:
+    tool_name, args = agent._route_question("Rank the top 3 equipment units that need maintenance attention today.")
+    result = agent.TOOL_FUNCTIONS[tool_name](**args)
+    ok = (tool_name == "get_equipment_needing_attention" and len(result["data"]) == 3
+          and all(r.get("recommended_action") for r in result["data"]))
+    record("TC-09b", "Top-N + actions for maintenance attention",
+           "Exactly 3 units with recommended actions", f"{len(result['data'])} units", ok)
+except Exception as e:
+    record("TC-09b", "Top-N + actions for maintenance attention", "Exactly 3 units with actions", f"Exception: {e}", False)
+
+try:
+    tool_name, args = agent._route_question("Give me ONLY the top 3 equipment units by Attention Score and explain why each one is high priority.")
+    result = agent.TOOL_FUNCTIONS[tool_name](**args)
+    ok = (tool_name == "compute_attention_scores" and len(result["data"]) == 3
+          and all(r.get("reason") and r.get("recommended_action") for r in result["data"]))
+    record("TC-09c", "Top-N + explanations for Attention Score",
+           "Exactly 3 units with reason/action", f"{len(result['data'])} units", ok)
+except Exception as e:
+    record("TC-09c", "Top-N + explanations for Attention Score", "Exactly 3 units with reason/action", f"Exception: {e}", False)
+
+# --------------------------------------------------------------------------
+# TC-10: Regression - project-specific utilization is preserved
+# --------------------------------------------------------------------------
+try:
+    tool_name, args = agent._route_question("Why did utilization change in Makkah Housing?")
+    result = agent.TOOL_FUNCTIONS[tool_name](**args)
+    ok = tool_name == "explain_utilization_trend" and result.get("scope") == "Makkah Housing"
+    record("TC-10", "Project-specific utilization filtering", "Scope=Makkah Housing", f"Scope={result.get('scope')}", ok)
+except Exception as e:
+    record("TC-10", "Project-specific utilization filtering", "Scope=Makkah Housing", f"Exception: {e}", False)
+
+# --------------------------------------------------------------------------
+# TC-11: Regression - invalid equipment IDs fail safely
+# --------------------------------------------------------------------------
+try:
+    tool_name, args = agent._route_question("Analyze fuel consumption for EQ-999.")
+    result = agent.TOOL_FUNCTIONS[tool_name](**args)
+    ok = result.get("error_code") == "equipment_not_found" and result.get("equipment_id") == "EQ-999"
+    record("TC-11", "Invalid equipment ID validation", "Clear equipment_not_found response", str(result.get("error_code")), ok)
+except Exception as e:
+    record("TC-11", "Invalid equipment ID validation", "Clear equipment_not_found response", f"Exception: {e}", False)
+
+# --------------------------------------------------------------------------
+# TC-12: Regression - report contains 3 manager actions
+# --------------------------------------------------------------------------
+try:
+    report = tools.generate_fleet_report()
+    ok = len(report.get("manager_actions", [])) == 3
+    record("TC-12", "Fleet report management actions", "Exactly 3 management actions", f"{len(report.get('manager_actions', []))} actions", ok)
+except Exception as e:
+    record("TC-12", "Fleet report management actions", "Exactly 3 management actions", f"Exception: {e}", False)
+
+# --------------------------------------------------------------------------
+# TC-13: Regression - Arabic request routes correctly and answers in Arabic
+# --------------------------------------------------------------------------
+try:
+    q = "رتب لي أعلى 3 معدات تحتاج تدخل اليوم، واذكر السبب والإجراء المقترح لكل معدة."
+    tool_name, args = agent._route_question(q)
+    answer = agent.ask_agent_test(q)
+    result = agent.TOOL_FUNCTIONS[tool_name](**args)
+    ok = (tool_name == "get_equipment_needing_attention" and len(result["data"]) == 3
+          and "السبب" in answer and "الإجراء المقترح" in answer)
+    record("TC-13", "Arabic routing + Arabic actionable answer",
+           "3 units, Arabic reason/action", f"Tool={tool_name}, units={len(result['data'])}", ok)
+except Exception as e:
+    record("TC-13", "Arabic routing + Arabic actionable answer", "3 units, Arabic reason/action", f"Exception: {e}", False)
+
+# --------------------------------------------------------------------------
+# TC-14: Maintenance Planner returns a valid 7-day prioritized schedule
+# --------------------------------------------------------------------------
+try:
+    plan = tools.build_maintenance_plan(top_n=6, horizon_days=7)
+    required = {"day", "priority", "equipment_id", "attention_score", "reason", "recommended_action", "estimated_service_hours"}
+    ok = (len(plan.get("data", [])) == 6
+          and all(required.issubset(r.keys()) for r in plan["data"])
+          and all(1 <= int(r["day_number"]) <= 7 for r in plan["data"])
+          and plan.get("summary", {}).get("estimated_service_hours", 0) > 0)
+    record("TC-14", "7-day Maintenance Planner",
+           "6 prioritized units with valid schedule/action/service estimate",
+           f"units={len(plan.get('data', []))}, service_h={plan.get('summary', {}).get('estimated_service_hours')}", ok)
+except Exception as e:
+    record("TC-14", "7-day Maintenance Planner", "Valid plan", f"Exception: {e}", False)
+
+# --------------------------------------------------------------------------
+# TC-15: What-If Simulator returns transparent delay-impact metrics
+# --------------------------------------------------------------------------
+try:
+    sim = tools.simulate_maintenance_delay("EQ-024", delay_days=7)
+    ok = (sim.get("equipment_id") == "EQ-024"
+          and sim.get("delay_days") == 7
+          and sim.get("projected_delay_downtime_hours", -1) >= sim.get("baseline_expected_downtime_hours", 0)
+          and "projected_utilization_%" in sim
+          and sim.get("recommended_action"))
+    record("TC-15", "What-If maintenance delay simulator",
+           "Valid 7-day scenario with impact + recommendation",
+           f"extra_down={sim.get('additional_downtime_hours')}, impact={sim.get('impact_band')}", ok)
+except Exception as e:
+    record("TC-15", "What-If maintenance delay simulator", "Valid scenario", f"Exception: {e}", False)
+
+# --------------------------------------------------------------------------
+# TC-16: What-If invalid equipment ID fails safely
+# --------------------------------------------------------------------------
+try:
+    sim = tools.simulate_maintenance_delay("EQ-999", delay_days=7)
+    ok = sim.get("error_code") == "equipment_not_found"
+    record("TC-16", "What-If invalid equipment validation",
+           "equipment_not_found response", str(sim.get("error_code")), ok)
+except Exception as e:
+    record("TC-16", "What-If invalid equipment validation", "Safe error", f"Exception: {e}", False)
+
+# --------------------------------------------------------------------------
+# TC-17: Agent routes new features correctly
+# --------------------------------------------------------------------------
+try:
+    tool_name, args = agent._route_question("Build a 7-day maintenance plan for the top 5 equipment units.")
+    ok1 = tool_name == "build_maintenance_plan" and args.get("top_n") == 5 and args.get("horizon_days") == 7
+    record("TC-17a", "Agent routing: Maintenance Planner",
+           "build_maintenance_plan top_n=5 horizon=7", f"{tool_name} {args}", ok1)
+except Exception as e:
+    record("TC-17a", "Agent routing: Maintenance Planner", "Correct route", f"Exception: {e}", False)
+
+try:
+    tool_name, args = agent._route_question("What if I delay maintenance for EQ-024 by 7 days?")
+    ok2 = tool_name == "simulate_maintenance_delay" and args.get("equipment_id") == "EQ-024" and args.get("delay_days") == 7
+    record("TC-17b", "Agent routing: What-If Simulator",
+           "simulate_maintenance_delay EQ-024 delay=7", f"{tool_name} {args}", ok2)
+except Exception as e:
+    record("TC-17b", "Agent routing: What-If Simulator", "Correct route", f"Exception: {e}", False)
+
+# --------------------------------------------------------------------------
+# TC-18: Structured context is available for card-based Agent UI
+# --------------------------------------------------------------------------
+try:
+    ctx = agent.ask_agent_with_context("Give me ONLY the top 3 equipment units by Attention Score.")
+    ok = (ctx.get("tool_name") == "compute_attention_scores"
+          and len(ctx.get("result", {}).get("data", [])) == 3
+          and isinstance(ctx.get("answer"), str) and len(ctx.get("answer")) > 0)
+    record("TC-18", "Agent structured response for cards",
+           "tool + structured result + answer", f"tool={ctx.get('tool_name')}", ok)
+except Exception as e:
+    record("TC-18", "Agent structured response for cards", "Valid context", f"Exception: {e}", False)
+
 # --------------------------------------------------------------------------
 # النتيجة النهائية
 # --------------------------------------------------------------------------

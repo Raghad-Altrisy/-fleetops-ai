@@ -126,5 +126,109 @@
     "actual": "Exists=True",
     "passed": true,
     "notes": ""
+  },
+  {
+    "id": "TC-09a",
+    "name": "Top-N respected for downtime",
+    "expected": "Exactly 3 units",
+    "actual": "3 units",
+    "passed": true,
+    "notes": ""
+  },
+  {
+    "id": "TC-09b",
+    "name": "Top-N + actions for maintenance attention",
+    "expected": "Exactly 3 units with recommended actions",
+    "actual": "3 units",
+    "passed": true,
+    "notes": ""
+  },
+  {
+    "id": "TC-09c",
+    "name": "Top-N + explanations for Attention Score",
+    "expected": "Exactly 3 units with reason/action",
+    "actual": "3 units",
+    "passed": true,
+    "notes": ""
+  },
+  {
+    "id": "TC-10",
+    "name": "Project-specific utilization filtering",
+    "expected": "Scope=Makkah Housing",
+    "actual": "Scope=Makkah Housing",
+    "passed": true,
+    "notes": ""
+  },
+  {
+    "id": "TC-11",
+    "name": "Invalid equipment ID validation",
+    "expected": "Clear equipment_not_found response",
+    "actual": "equipment_not_found",
+    "passed": true,
+    "notes": ""
+  },
+  {
+    "id": "TC-12",
+    "name": "Fleet report management actions",
+    "expected": "Exactly 3 management actions",
+    "actual": "3 actions",
+    "passed": true,
+    "notes": ""
+  },
+  {
+    "id": "TC-13",
+    "name": "Arabic routing + Arabic actionable answer",
+    "expected": "3 units, Arabic reason/action",
+    "actual": "Tool=get_equipment_needing_attention, units=3",
+    "passed": true,
+    "notes": ""
+  },
+  {
+    "id": "TC-14",
+    "name": "7-day Maintenance Planner",
+    "expected": "6 prioritized units with valid schedule/action/service estimate",
+    "actual": "units=6, service_h=23.7",
+    "passed": true,
+    "notes": ""
+  },
+  {
+    "id": "TC-15",
+    "name": "What-If maintenance delay simulator",
+    "expected": "Valid 7-day scenario with impact + recommendation",
+    "actual": "extra_down=1.17, impact=High",
+    "passed": true,
+    "notes": ""
+  },
+  {
+    "id": "TC-16",
+    "name": "What-If invalid equipment validation",
+    "expected": "equipment_not_found response",
+    "actual": "equipment_not_found",
+    "passed": true,
+    "notes": ""
+  },
+  {
+    "id": "TC-17a",
+    "name": "Agent routing: Maintenance Planner",
+    "expected": "build_maintenance_plan top_n=5 horizon=7",
+    "actual": "build_maintenance_plan {'top_n': 5, 'horizon_days': 7}",
+    "passed": true,
+    "notes": ""
+  },
+  {
+    "id": "TC-17b",
+    "name": "Agent routing: What-If Simulator",
+    "expected": "simulate_maintenance_delay EQ-024 delay=7",
+    "actual": "simulate_maintenance_delay {'delay_days': 7, 'equipment_id': 'EQ-024'}",
+    "passed": true,
+    "notes": ""
+  },
+  {
+    "id": "TC-18",
+    "name": "Agent structured response for cards",
+    "expected": "tool + structured result + answer",
+    "actual": "tool=compute_attention_scores",
+    "passed": true,
+    "notes": ""
   }
 ]
