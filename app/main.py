@@ -1,5 +1,24 @@
+import sys
+import os
+import html
+import io
+import json
+
+import streamlit as st  # <-- يجب استيراد streamlit هنا أولاً قبل أي استخدام لـ st
+import pandas as pd
+import plotly.express as px
+import plotly.graph_objects as go
+
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "src"))
+
+import tools
+import agent
+import ml_anomaly
+
+st.set_page_config(page_title="FleetOps AI | XCMG Innovation Track", page_icon="🚧", layout="wide")
+
 # ---------------------------------------------------------------------------
-# Global CSS — industrial / engineering look (Fixed NameError & Contrast)
+# Global CSS — industrial / engineering look
 # ---------------------------------------------------------------------------
 st.markdown("""
 <style>
@@ -9,11 +28,9 @@ html, body, [class*="css"] {
     font-family: 'Inter', -apple-system, sans-serif;
 }
 
-/* Hide default Streamlit chrome for a cleaner branded look */
 #MainMenu {visibility: hidden;}
 footer {visibility: hidden;}
 
-/* Top brand banner */
 .xcmg-banner {
     background: linear-gradient(90deg, #1D2126 0%, #2B3038 100%);
     border-bottom: 4px solid #C8102E;
@@ -68,7 +85,6 @@ footer {visibility: hidden;}
     margin-top: 2px;
 }
 
-/* Section headers */
 .section-header {
     font-family: 'Barlow Condensed', sans-serif;
     font-weight: 700;
@@ -79,20 +95,17 @@ footer {visibility: hidden;}
     margin: 6px 0 10px 0;
 }
 
-/* Tabs */
 .stTabs [data-baseweb="tab-list"] { gap: 4px; }
 .stTabs [data-baseweb="tab"] {
     background: #F3F4F6; border-radius: 6px 6px 0 0; padding: 8px 18px; font-weight: 600; color: #5A6472;
 }
 .stTabs [aria-selected="true"] { background: #FFFFFF; color: #C8102E !important; border-bottom: 3px solid #C8102E; }
 
-/* Buttons */
 .stButton > button, .stDownloadButton > button {
     background: #1D2126; color: white; border: none; border-radius: 6px; font-weight: 600;
 }
 .stButton > button:hover, .stDownloadButton > button:hover { background: #C8102E; }
 
-/* Agent response cards */
 .agent-card {
     background: #FFFFFF;
     border: 1px solid #E3E6EA;
@@ -112,7 +125,6 @@ footer {visibility: hidden;}
 .agent-card-body { font-size: 12.5px; color: #5A6472 !important; line-height: 1.45; }
 .agent-card-action { margin-top: 8px; font-size: 12px; color: #1D2126 !important; font-weight: 600; }
 
-/* Dark mode support */
 @media (prefers-color-scheme: dark) {
     .kpi-card, .agent-card {
         background: #2B3038 !important;
@@ -125,7 +137,6 @@ footer {visibility: hidden;}
     }
 }
 
-/* Footer strip */
 .xcmg-footer {
     margin-top: 30px; padding: 14px 20px; background: #1D2126; border-radius: 6px;
     color: #9AA3AF; font-size: 11.5px; text-align: center; border-top: 3px solid #C8102E;
