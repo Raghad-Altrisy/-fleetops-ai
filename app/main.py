@@ -148,6 +148,19 @@ footer {{visibility: hidden;}}
 .agent-card-body {{ font-size: 12.5px; color: {STEEL}; line-height: 1.45; }}
 .agent-card-action {{ margin-top: 8px; font-size: 12px; color: {CHARCOAL}; font-weight: 600; }}
 
+/* Strong, theme-friendly headings and labels */
+.section-header {{ color: {CHARCOAL} !important; }}
+.stMarkdown h1, .stMarkdown h2, .stMarkdown h3, .stMarkdown h4, .stMarkdown h5, .stMarkdown h6 {{
+    color: {CHARCOAL} !important;
+}}
+@media (prefers-color-scheme: dark) {{
+    .section-header, .stMarkdown h1, .stMarkdown h2, .stMarkdown h3, .stMarkdown h4, .stMarkdown h5, .stMarkdown h6 {{
+        color: #F3F4F6 !important;
+    }}
+    .kpi-label, .agent-card-body {{ color: #C4CBD4 !important; }}
+    .kpi-value, .agent-card-title, .agent-card-action {{ color: #F3F4F6 !important; }}
+}}
+
 /* Footer strip */
 .xcmg-footer {{
     margin-top: 30px; padding: 14px 20px; background: {CHARCOAL}; border-radius: 6px;
@@ -170,15 +183,43 @@ def section(title):
     st.markdown(f'<div class="section-header">{title}</div>', unsafe_allow_html=True)
 
 
-def style_fig(fig, height=380):
-    fig.update_layout(
-        height=height, plot_bgcolor="white", paper_bgcolor="white",
-        font=dict(family="Inter, sans-serif", color=CHARCOAL, size=12),
-        margin=dict(t=10, b=10, l=10, r=10),
-        legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="left", x=0),
+def style_fig(fig, height=380, chart_theme=None, title=None):
+    """Apply readable chart styling for both light and dark dashboard themes."""
+    if chart_theme is None:
+        chart_theme = st.session_state.get("chart_theme", "Auto")
+    if chart_theme == "Auto":
+        chart_theme = "Dark" if str(st.get_option("theme.base")).lower() == "dark" else "Light"
+
+    dark = chart_theme == "Dark"
+    bg = "#11161C" if dark else "#FFFFFF"
+    text = "#F3F4F6" if dark else "#1D2126"
+    muted = "#C4CBD4" if dark else "#4B5563"
+    grid = "#303841" if dark else "#E3E7EB"
+    line = "#4A5561" if dark else "#C9D0D7"
+
+    layout_kwargs = dict(
+        height=height, plot_bgcolor=bg, paper_bgcolor=bg,
+        font=dict(family="Inter, sans-serif", color=text, size=12),
+        margin=dict(t=55 if title else 18, b=55, l=55, r=18),
+        legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="left", x=0,
+                    font=dict(color=text, size=11)),
+        hoverlabel=dict(bgcolor="#20262D" if dark else "#FFFFFF",
+                        font=dict(color="#FFFFFF" if dark else CHARCOAL, family="Inter, sans-serif")),
     )
-    fig.update_xaxes(gridcolor="#EEF0F2", linecolor="#D8DCE1")
-    fig.update_yaxes(gridcolor="#EEF0F2", linecolor="#D8DCE1")
+    if title:
+        layout_kwargs["title"] = dict(
+            text=title, x=0, xanchor="left", y=0.98, yanchor="top",
+            font=dict(family="Inter, sans-serif", color=text, size=17)
+        )
+    fig.update_layout(**layout_kwargs)
+    fig.update_xaxes(
+        gridcolor=grid, linecolor=line, zerolinecolor=line,
+        tickfont=dict(color=muted, size=11), title_font=dict(color=text, size=12),
+    )
+    fig.update_yaxes(
+        gridcolor=grid, linecolor=line, zerolinecolor=line,
+        tickfont=dict(color=muted, size=11), title_font=dict(color=text, size=12),
+    )
     return fig
 
 
@@ -431,6 +472,11 @@ with st.sidebar:
         help="Higher downtime is always shown with a stronger warning color."
     )
     show_labels = st.toggle("Show chart values", value=True)
+    chart_theme = st.selectbox(
+        "Chart appearance", ["Auto", "Light", "Dark"], index=0,
+        help="Auto follows the Streamlit app theme. Light and Dark can be selected manually for maximum readability."
+    )
+    st.session_state["chart_theme"] = chart_theme
 
     st.divider()
     if tools.using_custom_data():
@@ -517,8 +563,13 @@ with tab_overview:
             color="downtime_rate_%", text="downtime_rate_%" if show_labels else None,
             color_continuous_scale=downtime_scale,
         )
-        fig.update_layout(coloraxis_colorbar=dict(title="Downtime %"))
-        st.plotly_chart(style_fig(fig), use_container_width=True)
+        dark_chart = st.session_state.get("chart_theme", "Auto") == "Dark"
+        fig.update_layout(coloraxis_colorbar=dict(
+            title="Downtime %",
+            title_font=dict(color="#F3F4F6" if dark_chart else CHARCOAL),
+            tickfont=dict(color="#C4CBD4" if dark_chart else CHARCOAL),
+        ))
+        st.plotly_chart(style_fig(fig, title="Equipment Downtime Rate"), use_container_width=True)
 
     with col2:
         section("Utilization rate by project")
@@ -528,8 +579,13 @@ with tab_overview:
             color="utilization_%", text="utilization_%" if show_labels else None,
             color_continuous_scale=[[0, RED_DARK], [0.5, GOLD], [1, GREEN]],
         )
-        fig2.update_layout(coloraxis_colorbar=dict(title="Utilization %"))
-        st.plotly_chart(style_fig(fig2), use_container_width=True)
+        dark_chart = st.session_state.get("chart_theme", "Auto") == "Dark"
+        fig2.update_layout(coloraxis_colorbar=dict(
+            title="Utilization %",
+            title_font=dict(color="#F3F4F6" if dark_chart else CHARCOAL),
+            tickfont=dict(color="#C4CBD4" if dark_chart else CHARCOAL),
+        ))
+        st.plotly_chart(style_fig(fig2, title="Utilization Rate by Project"), use_container_width=True)
 
     st.markdown("<br>", unsafe_allow_html=True)
     section("🚨 Equipment needing immediate attention")
@@ -549,7 +605,7 @@ with tab_overview:
         marker=dict(color=scores["attention_score"], colorscale=[[0, STEEL], [0.5, GOLD], [1, RED]]),
         text=scores["attention_score"], textposition="outside",
     ))
-    st.plotly_chart(style_fig(fig3, height=350), use_container_width=True)
+    st.plotly_chart(style_fig(fig3, height=350, title="Unified Attention Score"), use_container_width=True)
 
 # ============================== TAB 2: CHAT ==============================
 with tab_chat:
@@ -662,7 +718,7 @@ with tab_simulator:
             fig_w = px.bar(comp, x="Scenario", y="Downtime hours", text="Downtime hours",
                            color_discrete_sequence=[STEEL, RED])
             fig_w.update_traces(marker_color=[STEEL, RED])
-            st.plotly_chart(style_fig(fig_w, height=320), use_container_width=True)
+            st.plotly_chart(style_fig(fig_w, height=320, title="Scenario Downtime Comparison"), use_container_width=True)
         with wc2:
             section("Recommended decision")
             st.markdown(_agent_card_html(
