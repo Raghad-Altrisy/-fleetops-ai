@@ -35,7 +35,7 @@
     "id": "TC-05",
     "name": "ML anomaly detection cross-validates manual downtime ranking",
     "expected": "At least 2 of top-3 manual downtime units also flagged by Isolation Forest",
-    "actual": "Overlap: {'EQ-013', 'EQ-026', 'EQ-024'} (3/3)",
+    "actual": "Overlap: {'EQ-013', 'EQ-024', 'EQ-026'} (3/3)",
     "passed": true,
     "notes": ""
   },
@@ -123,7 +123,7 @@
     "id": "TC-08b",
     "name": "Presentation PPTX generated successfully",
     "expected": "File exists, size > 1KB",
-    "actual": "Exists=True",
+    "actual": "Exists=True; file=presentation/FleetOps_AI.pptx",
     "passed": true,
     "notes": ""
   },
